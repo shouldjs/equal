@@ -1,137 +1,6 @@
-var toString = Object.prototype.toString;
+var getType = require('should-type');
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-var isPromiseExist = typeof Promise !== 'undefined';
-var isBufferExist = typeof Buffer !== 'undefined';
-
-var NUMBER = 'number';
-var UNDEFINED = 'undefined';
-var STRING = 'string';
-var BOOLEAN = 'boolean';
-var OBJECT = 'object';
-var FUNCTION = 'function';
-var NULL = 'null';
-var ARRAY = 'array';
-var REGEXP = 'regexp';
-var DATE = 'date';
-var ERROR = 'error';
-var ARGUMENTS = 'arguments';
-var SYMBOL = 'symbol';
-var ARRAY_BUFFER = 'array-buffer';
-var TYPED_ARRAY = 'typed-array';
-var DATA_VIEW = 'data-view';
-var MAP = 'map';
-var SET = 'set';
-var WEAK_SET = 'weak-set';
-var WEAK_MAP = 'weak-map';
-var PROMISE = 'promise';
-
-// node buffer
-var BUFFER = 'buffer';
-
-// dom html element
-var HTML_ELEMENT = 'html-element';
-var DOCUMENT = 'document';
-var WINDOW = 'window';
-var FILE = 'file';
-var FILE_LIST = 'file-list';
-var BLOB = 'blob';
-
-function getType(instance) {
-    var type = typeof instance;
-
-    switch (type) {
-        case NUMBER:
-            return NUMBER;
-        case UNDEFINED:
-            return UNDEFINED;
-        case STRING:
-            return STRING;
-        case BOOLEAN:
-            return BOOLEAN;
-        case FUNCTION:
-            return FUNCTION;
-        case SYMBOL:
-            return SYMBOL;
-        case OBJECT:
-            if (instance === null) return NULL;
-
-            var clazz = toString.call(instance);
-
-            switch (clazz) {
-                case '[object String]':
-                    return STRING;
-                case '[object Boolean]':
-                    return BOOLEAN;
-                case '[object Number]':
-                    return NUMBER;
-                case '[object Array]':
-                    return ARRAY;
-                case '[object RegExp]':
-                    return REGEXP;
-                case '[object Error]':
-                    return ERROR;
-                case '[object Date]':
-                    return DATE;
-                case '[object Arguments]':
-                    return ARGUMENTS;
-                case '[object Math]':
-                    return OBJECT;
-                case '[object JSON]':
-                    return OBJECT;
-                case '[object ArrayBuffer]':
-                    return ARRAY_BUFFER;
-                case '[object Int8Array]':
-                    return TYPED_ARRAY;
-                case '[object Uint8Array]':
-                    return TYPED_ARRAY;
-                case '[object Uint8ClampedArray]':
-                    return TYPED_ARRAY;
-                case '[object Int16Array]':
-                    return TYPED_ARRAY;
-                case '[object Uint16Array]':
-                    return TYPED_ARRAY;
-                case '[object Int32Array]':
-                    return TYPED_ARRAY;
-                case '[object Uint32Array]':
-                    return TYPED_ARRAY;
-                case '[object Float32Array]':
-                    return TYPED_ARRAY;
-                case '[object Float64Array]':
-                    return TYPED_ARRAY;
-                case '[object DataView]':
-                    return DATA_VIEW;
-                case '[object Map]':
-                    return MAP;
-                case '[object WeakMap]':
-                    return WEAK_MAP;
-                case '[object Set]':
-                    return SET;
-                case '[object WeakSet]':
-                    return WEAK_SET;
-                case '[object Promise]':
-                    return PROMISE;
-                case '[object Window]':
-                    return WINDOW;
-                case '[object HTMLDocument]':
-                    return DOCUMENT;
-                case '[object Blob]':
-                    return BLOB;
-                case '[object File]':
-                    return FILE;
-                case '[object FileList]':
-                    return FILE_LIST;
-                default:
-                    if (isPromiseExist && instance instanceof Promise) return PROMISE;
-
-                    if (isBufferExist && instance instanceof Buffer) return BUFFER;
-
-                    if (/^\[object HTML\w+Element\]$/.test(clazz)) return HTML_ELEMENT;
-
-                    if (clazz === '[object Object]') return OBJECT;
-            }
-    }
-}
 
 function eq(a, b, stackA, stackB) {
     // equal a and b exit early
@@ -147,22 +16,29 @@ function eq(a, b, stackA, stackB) {
     if (typeA !== typeB) return false;
 
     switch (typeA) {
-        case NUMBER:
+        case 'number':
             return (a !== a) ? b !== b
                 // but treat `+0` vs. `-0` as not equal
                 : (a === 0 ? (1 / a === 1 / b) : a === b);
 
-        case REGEXP:
+        case 'regexp':
             return String(a) === String(b);
 
-        case BOOLEAN:
-        case STRING:
+        case 'boolean':
+        case 'string':
             return a === b;
 
-        case DATE:
+        case 'date':
             return +a === +b;
 
-        case BUFFER:
+        case 'object-number':
+        case 'object-boolean':
+        case 'object-string':
+            var isValueEqual = eq(a.valueOf(), b.valueOf(), stackA, stackB);
+            if(isValueEqual) break;
+            return false;
+
+        case 'buffer':
             if(a.length !== b.length) return false;
 
             var l = a.length;
@@ -170,13 +46,13 @@ function eq(a, b, stackA, stackB) {
 
             return true;
 
-        case ERROR:
+        case 'error':
             //only check not enumerable properties, and check arrays later
             if(a.name !== b.name || a.message !== b.message) return false;
 
             break;
 
-        case ARRAY_BUFFER:
+        case 'array-buffer':
             if(a.byteLength !== b.byteLength) return false;
 
             if(typeof Int8Array !== 'undefined') {
@@ -212,11 +88,11 @@ function eq(a, b, stackA, stackB) {
         result = true,
         key;
 
-    if (typeA === ARRAY || typeA === ARGUMENTS) {
+    if (typeA === 'array' || typeA === 'arguments') {
         if (a.length !== b.length) return false;
     }
 
-    if (typeB === FUNCTION) {
+    if (typeB === 'function') {
         if (a.toString() !== b.toString()) return false;
     }
 
@@ -240,7 +116,7 @@ function eq(a, b, stackA, stackB) {
     stackA.pop();
     stackB.pop();
 
-    if(typeB === FUNCTION) {
+    if(typeB === 'function') {
         result = result && eq(a.prototype, b.prototype);
     }
 

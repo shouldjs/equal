@@ -89,6 +89,9 @@ exports["(1) bool obj not eqs primitive bool of same value"] = function() {
 exports["(2) bool obj not eqs primitive bool of same value"] = function() {
   return ne(true, new Boolean(true));
 };
+exports["number obj eqs the same valued number object"] = function() {
+  return eq(new Number(5), new Number(5));
+};
 
 /* 2. complex tests */
 exports["obj w undef member not eqs other obj w/out same member"] = function() {
@@ -181,7 +184,7 @@ exports["str obj w props eq same str, same props"] = function() {
   d['abc'] = 42;
   e = new String("helo test");
   e['abc'] = 42;
-  return ne(d, e);
+  return eq(d, e);
 };
 exports["str obj w props not eq same str, other props"] = function() {
   var d, e;
@@ -199,7 +202,7 @@ exports["str obj w props eq same str, same props (circ)"] = function() {
   d['abc'] = c;
   e = new String("helo test");
   e['abc'] = c;
-  return ne(d, e);
+  return eq(d, e);
 };
 exports["str obj w props not eq same str, other props (circ)"] = function() {
   var c, d, e;
