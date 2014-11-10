@@ -2,11 +2,11 @@ var assert = require('assert');
 var equal = require('./index');
 
 function eq(a, b) {
-  assert.ok(equal(a, b));
+  assert.ok(equal(a, b).result);
 }
 
 function ne(a, b) {
-  assert.ok(!equal(a, b));
+  assert.ok(!equal(a, b).result);
 }
 
 /* 1. simple tests */
