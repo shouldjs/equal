@@ -318,7 +318,14 @@ exports["joshwilsdon"] = function() {
 };
 
 exports['node buffer'] = function() {
-  eq(new Buffer('abc'), new Buffer('abc'))
-  ne(new Buffer('abc'), new Buffer('abc1'))
-  ne(new Buffer('abd'), new Buffer('abc'))
-}
+  eq(new Buffer('abc'), new Buffer('abc'));
+  ne(new Buffer('abc'), new Buffer('abc1'));
+  ne(new Buffer('abd'), new Buffer('abc'));
+};
+
+
+exports['RegExp with props'] = function() {
+  var re1 = /a/;
+  re1.lastIndex = 3;
+  ne(re1, /a/);
+};

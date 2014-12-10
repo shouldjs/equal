@@ -47,7 +47,7 @@ function eq(a, b, stackA, stackB, path) {
     return makeResult(a !== 0 || (1 / a == 1 / b), path, REASON.PLUS_0_AND_MINUS_0, a, b);
   }
 
-  var l;
+  var l, isValueEqual;
 
   var typeA = getType(a),
     typeB = getType(b);
@@ -62,19 +62,27 @@ function eq(a, b, stackA, stackB, path) {
         : (a === 0 ? makeResult((1 / a === 1 / b), path, REASON.PLUS_0_AND_MINUS_0, a, b) : makeResult(a === b, path, REASON.EQUALITY, a, b));
 
     case 'regexp':
-      return makeResult(String(a) === String(b), path, REASON.EQUALITY, a, b);
+      isValueEqual = a.source === b.source &&
+        a.global === b.global &&
+        a.multiline === b.multiline &&
+        a.lastIndex === b.lastIndex &&
+        a.ignoreCase === b.ignoreCase;
+      if(isValueEqual) break;
+      return makeResult(false, path, REASON.EQUALITY, a, b);
 
     case 'boolean':
     case 'string':
       return makeResult(a === b, path, REASON.EQUALITY, a, b);
 
     case 'date':
-      return makeResult(+a === +b, path, REASON.EQUALITY, a, b);
+      isValueEqual = +a === +b;
+      if(isValueEqual) break;
+      return makeResult(false, path, REASON.EQUALITY, a, b);
 
     case 'object-number':
     case 'object-boolean':
     case 'object-string':
-      var isValueEqual = a.valueOf() === b.valueOf();
+      isValueEqual = a.valueOf() === b.valueOf();
       if(isValueEqual) break;
       return makeResult(false, path, REASON.WRAPPED_VALUE, a.valueOf(), b.valueOf());
 
