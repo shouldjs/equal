@@ -329,3 +329,44 @@ exports['RegExp with props'] = function() {
   re1.lastIndex = 3;
   ne(re1, /a/);
 };
+
+exports['Date with props'] = function() {
+  var now = Date.now();
+
+  var d1 = new Date(now);
+  var d2 = new Date(now);
+
+  d1.a = 10;
+
+  ne(d1, d2);
+};
+
+exports['Check object prototypes'] = function() {
+  var nbRoot = {
+    toString: function() { return this.first + ' ' + this.last; }
+  };
+
+  function nameBuilder(first, last) {
+    this.first = first;
+    this.last = last;
+    return this;
+  }
+  nameBuilder.prototype = nbRoot;
+
+  function nameBuilder2(first, last) {
+    this.first = first;
+    this.last = last;
+    return this;
+  }
+  nameBuilder2.prototype = nbRoot;
+
+  var nb1 = new nameBuilder('Ryan', 'Dahl');
+  var nb2 = new nameBuilder2('Ryan', 'Dahl');
+
+  eq(nb1, nb2);
+
+  nameBuilder2.prototype = Object;
+  nb2 = new nameBuilder2('Ryan', 'Dahl');
+
+  ne(nb1, nb2);
+};

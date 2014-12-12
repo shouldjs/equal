@@ -27,6 +27,7 @@ var REASON = {
   DIFFERENT_TYPES: 'A has type %s and B has type %s',
   NAN_NUMBER: 'NaN is not equal to any number',
   EQUALITY: 'A is not equal to B',
+  EQUALITY_PROTOTYPE: 'A and B have different prototypes',
   WRAPPED_VALUE: 'A wrapped value is not equal to B wrapped value',
   FUNCTION_SOURCES: 'function A is not equal to B by source code value (via .toString call)',
   MISSING_KEY: '%s does not have key %s',
@@ -157,6 +158,20 @@ function eq(a, b, stackA, stackB, path) {
       hasProperty = hasOwnProperty.call(b, key);
       if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'B', key), a, b);
     }
+  }
+
+  var prototypesEquals = false, canComparePrototypes = false;
+
+  if(Object.getPrototypeOf) {
+    prototypesEquals = Object.getPrototypeOf(a) === Object.getPrototypeOf(b);
+    canComparePrototypes = true;
+  } else if(a.__proto__ && b.__proto__) {
+    prototypesEquals = a.__proto__ === b.__proto__;
+    canComparePrototypes = true;
+  }
+
+  if(canComparePrototypes && !prototypesEquals) {
+    return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b);
   }
 
   stackA.pop();
