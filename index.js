@@ -1,13 +1,14 @@
 var getType = require('should-type');
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-function makeResult(r, path, reason, a, b) {
+function makeResult(r, path, reason, a, b, showReason) {
   var o = {result: r};
   if(!r) {
     o.path = path;
     o.reason = reason;
     o.a = a;
     o.b = b;
+    o.showReason = showReason;
   }
   return o;
 }
@@ -175,7 +176,7 @@ function eq(a, b, opts, stackA, stackB, path) {
     }
 
     if(canComparePrototypes && !prototypesEquals) {
-      return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b);
+      return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b, true);
     }
   }
 
