@@ -40,7 +40,7 @@ var MESSAGE = ['message'];
 var BYTE_LENGTH = ['byteLength'];
 var PROTOTYPE = ['prototype'];
 
-function eq(a, b, stackA, stackB, path, opts) {
+function eq(a, b, opts, stackA, stackB, path) {
   path = path || [];
   opts = opts || { checkProtoEql: true };
 
@@ -149,7 +149,7 @@ function eq(a, b, stackA, stackB, path, opts) {
       hasProperty = hasOwnProperty.call(a, key);
       if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'A', key), a, b);
 
-      keysComparison = eq(a[key], b[key], stackA, stackB, path.concat([key]), opts);
+      keysComparison = eq(a[key], b[key], opts, stackA, stackB, path.concat([key]));
       if(!keysComparison.result) return keysComparison;
     }
   }
@@ -183,7 +183,7 @@ function eq(a, b, stackA, stackB, path, opts) {
   stackB.pop();
 
   if(typeB === 'function') {
-    keysComparison = eq(a.prototype, b.prototype, stackA, stackB, path.concat(PROTOTYPE), opts);
+    keysComparison = eq(a.prototype, b.prototype, opts, stackA, stackB, path.concat(PROTOTYPE));
     if(!keysComparison.result) return keysComparison;
   }
 
