@@ -40,8 +40,10 @@ var MESSAGE = ['message'];
 var BYTE_LENGTH = ['byteLength'];
 var PROTOTYPE = ['prototype'];
 
-function eq(a, b, stackA, stackB, path) {
+function eq(a, b, stackA, stackB, path, opts) {
   path = path || [];
+  opts = opts || { checkProtoEql: true };
+
   // equal a and b exit early
   if(a === b) {
     // check for +0 !== -0;
@@ -147,7 +149,7 @@ function eq(a, b, stackA, stackB, path) {
       hasProperty = hasOwnProperty.call(a, key);
       if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'A', key), a, b);
 
-      keysComparison = eq(a[key], b[key], stackA, stackB, path.concat([key]));
+      keysComparison = eq(a[key], b[key], stackA, stackB, path.concat([key]), opts);
       if(!keysComparison.result) return keysComparison;
     }
   }
@@ -162,23 +164,26 @@ function eq(a, b, stackA, stackB, path) {
 
   var prototypesEquals = false, canComparePrototypes = false;
 
-  if(Object.getPrototypeOf) {
-    prototypesEquals = Object.getPrototypeOf(a) === Object.getPrototypeOf(b);
-    canComparePrototypes = true;
-  } else if(a.__proto__ && b.__proto__) {
-    prototypesEquals = a.__proto__ === b.__proto__;
-    canComparePrototypes = true;
-  }
+  if(opts.checkProtoEql) {
 
-  if(canComparePrototypes && !prototypesEquals) {
-    return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b);
+    if(Object.getPrototypeOf) {
+      prototypesEquals = Object.getPrototypeOf(a) === Object.getPrototypeOf(b);
+      canComparePrototypes = true;
+    } else if(a.__proto__ && b.__proto__) {
+      prototypesEquals = a.__proto__ === b.__proto__;
+      canComparePrototypes = true;
+    }
+
+    if(canComparePrototypes && !prototypesEquals) {
+      return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b);
+    }
   }
 
   stackA.pop();
   stackB.pop();
 
   if(typeB === 'function') {
-    keysComparison = eq(a.prototype, b.prototype, stackA, stackB, path.concat(PROTOTYPE));
+    keysComparison = eq(a.prototype, b.prototype, stackA, stackB, path.concat(PROTOTYPE), opts);
     if(!keysComparison.result) return keysComparison;
   }
 
