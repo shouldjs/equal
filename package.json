@@ -4,7 +4,7 @@
   "description": "Deep comparison of 2 instances for should.js",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --ui exports -R mocha-better-spec-reporter test.js"
+    "test": "mocha --ui bdd -R mocha-better-spec-reporter test.js"
   },
   "repository": {
     "type": "git",

@@ -41,7 +41,7 @@ var MESSAGE = ['message'];
 var BYTE_LENGTH = ['byteLength'];
 var PROTOTYPE = ['prototype'];
 
-function eq(a, b, opts, stackA, stackB, path) {
+function eqInternal(a, b, opts, stackA, stackB, path) {
   path = path || [];
   opts = opts || { checkProtoEql: true };
 
@@ -105,15 +105,6 @@ function eq(a, b, opts, stackA, stackB, path) {
 
       break;
 
-    //XXX check more in browsers
-    case 'array-buffer':
-      if(a.byteLength !== b.byteLength) return makeResult(false, path.concat(BYTE_LENGTH), REASON.EQUALITY, a.byteLength, b.byteLength);
-
-      l = a.byteLength;
-      while(l--) if(a[l] !== b[l]) return makeResult(false, path.concat([l]), REASON.EQUALITY, a[l], b[l]);
-
-      return EQUALS;
-
   }
 
   // compare deep objects and arrays
@@ -136,8 +127,12 @@ function eq(a, b, opts, stackA, stackB, path) {
     keysComparison,
     key;
 
-  if(typeA === 'array' || typeA === 'arguments') {
+  if(typeA === 'array' || typeA === 'arguments' || typeA === 'typed-array') {
     if(a.length !== b.length) return makeResult(false, path.concat(LENGTH), REASON.EQUALITY, a.length, b.length);
+  }
+
+  if(typeA === 'array-buffer' || typeA === 'typed-array') {
+    if(a.byteLength !== b.byteLength) return makeResult(false, path.concat(BYTE_LENGTH), REASON.EQUALITY, a.byteLength, b.byteLength);
   }
 
   if(typeB === 'function') {
@@ -150,7 +145,7 @@ function eq(a, b, opts, stackA, stackB, path) {
       hasProperty = hasOwnProperty.call(a, key);
       if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'A', key), a, b);
 
-      keysComparison = eq(a[key], b[key], opts, stackA, stackB, path.concat([key]));
+      keysComparison = eqInternal(a[key], b[key], opts, stackA, stackB, path.concat([key]));
       if(!keysComparison.result) return keysComparison;
     }
   }
@@ -184,12 +179,15 @@ function eq(a, b, opts, stackA, stackB, path) {
   stackB.pop();
 
   if(typeB === 'function') {
-    keysComparison = eq(a.prototype, b.prototype, opts, stackA, stackB, path.concat(PROTOTYPE));
+    keysComparison = eqInternal(a.prototype, b.prototype, opts, stackA, stackB, path.concat(PROTOTYPE));
     if(!keysComparison.result) return keysComparison;
   }
 
   return EQUALS;
 }
 
+function eq(a, b, opts) {
+  return eqInternal(a, b, opts, [], [], []);
+}
 
 module.exports = eq;
