@@ -8,7 +8,9 @@ function makeResult(r, path, reason, a, b, showReason) {
     o.reason = reason;
     o.a = a;
     o.b = b;
-    o.showReason = showReason;
+    if(showReason) {
+      o.showReason = showReason;
+    }
   }
   return o;
 }
@@ -31,80 +33,93 @@ var REASON = {
   EQUALITY_PROTOTYPE: 'A and B have different prototypes',
   WRAPPED_VALUE: 'A wrapped value is not equal to B wrapped value',
   FUNCTION_SOURCES: 'function A is not equal to B by source code value (via .toString call)',
-  MISSING_KEY: '%s does not have key %s',
+  MISSING_KEY: '%s has no key %s',
   CIRCULAR_VALUES: 'A has circular reference that was visited not in the same time as B'
 };
 
-var LENGTH = ['length'];
-var NAME = ['name'];
-var MESSAGE = ['message'];
-var BYTE_LENGTH = ['byteLength'];
-var PROTOTYPE = ['prototype'];
+function eqInternal(a, b, opts, stackA, stackB, path, fails) {
+  var r = EQUALS;
 
-function eqInternal(a, b, opts, stackA, stackB, path) {
-  path = path || [];
-  opts = opts || { checkProtoEql: true };
+  function result(comparison, reason) {
+    var res = makeResult(comparison, path, reason, a, b);
+    if(!comparison && opts.collectAllFails) {
+      fails.push(res);
+    }
+    return res;
+  }
+
+  function checkPropertyEquality(property) {
+    return eqInternal(a[property], b[property], opts, stackA, stackB, path.concat([property]), fails);
+  }
 
   // equal a and b exit early
   if(a === b) {
     // check for +0 !== -0;
-    return makeResult(a !== 0 || (1 / a == 1 / b), path, REASON.PLUS_0_AND_MINUS_0, a, b);
+    return result(a !== 0 || (1 / a == 1 / b), REASON.PLUS_0_AND_MINUS_0);
   }
 
-  var l, isValueEqual;
+  var l, isValueEqual, p;
 
   var typeA = getType(a),
     typeB = getType(b);
 
   // if objects has different types they are not equals
-  if(typeA !== typeB) return makeResult(false, path, format(REASON.DIFFERENT_TYPES, typeA, typeB), a, b);
+  if(typeA !== typeB) return result(false, format(REASON.DIFFERENT_TYPES, typeA, typeB));
 
   switch(typeA) {
     case 'number':
-      return (a !== a) ? makeResult(b !== b, path, REASON.NAN_NUMBER, a, b)
+      return (a !== a) ? result(b !== b, REASON.NAN_NUMBER)
         // but treat `+0` vs. `-0` as not equal
-        : (a === 0 ? makeResult((1 / a === 1 / b), path, REASON.PLUS_0_AND_MINUS_0, a, b) : makeResult(a === b, path, REASON.EQUALITY, a, b));
+        : (a === 0 ? result(1 / a === 1 / b, REASON.PLUS_0_AND_MINUS_0) : result(a === b, REASON.EQUALITY));
 
     case 'regexp':
-      isValueEqual = a.source === b.source &&
-        a.global === b.global &&
-        a.multiline === b.multiline &&
-        a.lastIndex === b.lastIndex &&
-        a.ignoreCase === b.ignoreCase;
-      if(isValueEqual) break;
-      return makeResult(false, path, REASON.EQUALITY, a, b);
+      p = ['source', 'global', 'multiline', 'lastIndex', 'ignoreCase'];
+      while(p.length) {
+        r = checkPropertyEquality(p.shift());
+        if(!opts.collectAllFails && !r.result) return r;
+      }
+      break;
 
     case 'boolean':
     case 'string':
-      return makeResult(a === b, path, REASON.EQUALITY, a, b);
+      return result(a === b, REASON.EQUALITY);
 
     case 'date':
-      isValueEqual = +a === +b;
-      if(isValueEqual) break;
-      return makeResult(false, path, REASON.EQUALITY, a, b);
+      if(+a !== +b && !opts.collectAllFails) {
+        return result(false, REASON.EQUALITY);
+      }
+      break;
 
     case 'object-number':
     case 'object-boolean':
     case 'object-string':
-      isValueEqual = a.valueOf() === b.valueOf();
-      if(isValueEqual) break;
-      return makeResult(false, path, REASON.WRAPPED_VALUE, a.valueOf(), b.valueOf());
+      r = eqInternal(a.valueOf(), b.valueOf(), opts, stackA, stackB, path, fails);
+      if(!r.result && !opts.collectAllFails) {
+        r.reason = REASON.WRAPPED_VALUE;
+        return r;
+      }
+      break;
 
     case 'buffer':
-      if(a.length !== b.length) return makeResult(false, path.concat(LENGTH), REASON.EQUALITY, a.length, b.length);
+      r = checkPropertyEquality('length');
+      if(!opts.collectAllFails && !r.result) return r;
 
       l = a.length;
-      while(l--) if(a[l] !== b[l]) return makeResult(false, path.concat([l]), REASON.EQUALITY, a[l], b[l]);
+      while(l--) {
+        r = checkPropertyEquality(l);
+        if(!opts.collectAllFails && !r.result) return r;
+      }
 
       return EQUALS;
 
     case 'error':
-      //only check not enumerable properties, and check arrays later
-      if(a.name !== b.name) return makeResult(false, path.concat(NAME), REASON.EQUALITY, a.name, b.name);
-      if(a.message !== b.message) return makeResult(false, path.concat(MESSAGE), REASON.EQUALITY, a.message, b.message);
+      p = ['name', 'message'];
+      while(p.length) {
+        r = checkPropertyEquality(p.shift());
+        if(!opts.collectAllFails && !r.result) return r;
+      }
 
       break;
-
   }
 
   // compare deep objects and arrays
@@ -115,7 +130,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
   l = stackA.length;
   while(l--) {
     if(stackA[l] == a) {
-      return makeResult(stackB[l] == b, path, REASON.CIRCULAR_VALUES, a, b);
+      return result(stackB[l] == b, REASON.CIRCULAR_VALUES);
     }
   }
 
@@ -128,33 +143,45 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
     key;
 
   if(typeA === 'array' || typeA === 'arguments' || typeA === 'typed-array') {
-    if(a.length !== b.length) return makeResult(false, path.concat(LENGTH), REASON.EQUALITY, a.length, b.length);
+    r = checkPropertyEquality('length');
+    if(!opts.collectAllFails && !r.result) return r;
   }
 
   if(typeA === 'array-buffer' || typeA === 'typed-array') {
-    if(a.byteLength !== b.byteLength) return makeResult(false, path.concat(BYTE_LENGTH), REASON.EQUALITY, a.byteLength, b.byteLength);
+    r = checkPropertyEquality('byteLength');
+    if(!opts.collectAllFails && !r.result) return r;
   }
 
   if(typeB === 'function') {
     var fA = a.toString(), fB = b.toString();
-    if(fA !== fB) return makeResult(false, path, REASON.FUNCTION_SOURCES, fA, fB);
+    r = eqInternal(fA, fB, opts, stackA, stackB, path, fails);
+    r.reason = REASON.FUNCTION_SOURCES;
+    if(!opts.collectAllFails && !r.result) return r;
   }
 
   for(key in b) {
     if(hasOwnProperty.call(b, key)) {
-      hasProperty = hasOwnProperty.call(a, key);
-      if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'A', key), a, b);
+      r = result(hasOwnProperty.call(a, key), format(REASON.MISSING_KEY, 'A', key));
+      if(!r.result && !opts.collectAllFails) {
+        return r;
+      }
 
-      keysComparison = eqInternal(a[key], b[key], opts, stackA, stackB, path.concat([key]));
-      if(!keysComparison.result) return keysComparison;
+      if(r.result) {
+        r = checkPropertyEquality(key);
+        if(!r.result && !opts.collectAllFails) {
+          return r;
+        }
+      }
     }
   }
 
   // ensure both objects have the same number of properties
   for(key in a) {
     if(hasOwnProperty.call(a, key)) {
-      hasProperty = hasOwnProperty.call(b, key);
-      if(!hasProperty) return makeResult(false, path, format(REASON.MISSING_KEY, 'B', key), a, b);
+      r = result(hasOwnProperty.call(b, key), format(REASON.MISSING_KEY, 'B', key));
+      if(!r.result && !opts.collectAllFails) {
+        return r;
+      }
     }
   }
 
@@ -170,8 +197,8 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
       canComparePrototypes = true;
     }
 
-    if(canComparePrototypes && !prototypesEquals) {
-      return makeResult(false, path, REASON.EQUALITY_PROTOTYPE, a, b, true);
+    if(canComparePrototypes && !prototypesEquals && !opts.collectAllFails) {
+      return result(false, REASON.EQUALITY_PROTOTYPE);
     }
   }
 
@@ -179,15 +206,22 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
   stackB.pop();
 
   if(typeB === 'function') {
-    keysComparison = eqInternal(a.prototype, b.prototype, opts, stackA, stackB, path.concat(PROTOTYPE));
-    if(!keysComparison.result) return keysComparison;
+    r = checkPropertyEquality('prototype');
+    if(!r.result && !opts.collectAllFails) return r;
   }
 
   return EQUALS;
 }
 
+var defaultOptions = {checkProtoEql: true, collectAllFails: false};
+
 function eq(a, b, opts) {
-  return eqInternal(a, b, opts, [], [], []);
+  opts = opts || defaultOptions;
+  var fails = [];
+  var r = eqInternal(a, b, opts || defaultOptions, [], [], [], fails);
+  return opts.collectAllFails ? fails : r;
 }
 
 module.exports = eq;
+
+eq.r = REASON;
