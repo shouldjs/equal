@@ -1,16 +1,13 @@
 var getType = require('should-type');
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-function makeResult(r, path, reason, a, b, showReason) {
+function makeResult(r, path, reason, a, b) {
   var o = {result: r};
   if(!r) {
     o.path = path;
     o.reason = reason;
     o.a = a;
     o.b = b;
-    if(showReason) {
-      o.showReason = showReason;
-    }
   }
   return o;
 }
@@ -58,7 +55,7 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
     return result(a !== 0 || (1 / a == 1 / b), REASON.PLUS_0_AND_MINUS_0);
   }
 
-  var l, isValueEqual, p;
+  var l, p;
 
   var typeA = getType(a),
     typeB = getType(b);
@@ -185,10 +182,12 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
     }
   }
 
+  stackA.pop();
+  stackB.pop();
+
   var prototypesEquals = false, canComparePrototypes = false;
 
   if(opts.checkProtoEql) {
-
     if(Object.getPrototypeOf) {
       prototypesEquals = Object.getPrototypeOf(a) === Object.getPrototypeOf(b);
       canComparePrototypes = true;
@@ -198,12 +197,13 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
     }
 
     if(canComparePrototypes && !prototypesEquals && !opts.collectAllFails) {
-      return result(false, REASON.EQUALITY_PROTOTYPE);
+      r = result(prototypesEquals, REASON.EQUALITY_PROTOTYPE);
+      r.showReason = true;
+      if(!r.result && !opts.collectAllFails) {
+        return r;
+      }
     }
   }
-
-  stackA.pop();
-  stackB.pop();
 
   if(typeB === 'function') {
     r = checkPropertyEquality('prototype');
