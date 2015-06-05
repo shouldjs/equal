@@ -31,7 +31,8 @@ var REASON = {
   FUNCTION_SOURCES: 'function A is not equal to B by source code value (via .toString call)',
   MISSING_KEY: '%s has no key %s',
   CIRCULAR_VALUES: 'A has circular reference that was visited not in the same time as B',
-  SET_MAP_MISSING_ENTRY: 'Set/Map missing entry'
+  SET_MAP_MISSING_KEY: 'Set/Map missing key',
+  MAP_VALUE_EQUALITY: 'Values of the same key in A and B is not equal'
 };
 
 function eqInternal(a, b, opts, stackA, stackB, path) {
@@ -165,23 +166,65 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
           stackA.push(a);
           stackB.push(b);
 
-          var iteratorMethod = typeA.cls == 'map' ? 'entries' : 'keys';
-
-          var itA = a[iteratorMethod]();
+          var itA = a.entries();
           var nextA = itA.next();
 
           while(!nextA.done) {
-            var itB = b[iteratorMethod]();
-            var nextB = itB.next();
+            var key = nextA.value[0];
+            //first check for primitive key if we can do light check
+            //using .has and .get
+            if(getType(key).type != 'object') {
+              if(b.has(key)) {
+                if(typeA.cls == 'map') {
+                  //for map we also check its value to be equal
+                  var value = b.get(key);
+                  r = eqInternal(nextA.value[1], value, opts, stackA, stackB, path);
+                  if(!r.result) {
+                    r.a = nextA.value;
+                    r.b = value;
+                    r.reason = REASON.MAP_VALUE_EQUALITY;
 
-            while(!nextB.done) {
-              r = eqInternal(nextA.value, nextB.value, opts, stackA, stackB, path);
+                    break;
+                  }
+                }
 
-              if(r.result) {
+              } else {
+                r = result(false, REASON.SET_MAP_MISSING_KEY);
+                r.a = key;
+                r.b = key;
+
                 break;
               }
+            } else {
+              //heavy check
+              //we search by iterator for key equality using equal
+              var itB = b.entries();
+              var nextB = itB.next();
 
-              nextB = itB.next();
+              while(!nextB.done) {
+                //first check for keys
+                r = eqInternal(nextA.value[0], nextB.value[0], opts, stackA, stackB, path);
+
+                if(!r.result) {
+                  r.reason = REASON.SET_MAP_MISSING_KEY;
+                  r.a = key;
+                  r.b = key;
+                } else {
+                  if(typeA.cls == 'map') {
+                    r = eqInternal(nextA.value[1], nextB.value[1], opts, stackA, stackB, path);
+
+                    if(!r.result) {
+                      r.a = nextA.value;
+                      r.b = nextB.value;
+                      r.reason = REASON.MAP_VALUE_EQUALITY;
+                    }
+                  }
+
+                  break;
+                }
+
+                nextB = itB.next();
+              }
             }
 
             if(!r.result) {
