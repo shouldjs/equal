@@ -1,6 +1,6 @@
 {
   "name": "should-equal",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Deep comparison of 2 instances for should.js",
   "main": "index.js",
   "scripts": {
