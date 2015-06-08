@@ -325,7 +325,12 @@ var defaultOptions = {
 };
 
 function eq(a, b, opts) {
-  opts = opts || defaultOptions;
+  opts = opts || {};
+  if(typeof opts.checkProtoEql !== 'boolean')
+    opts.checkProtoEql = defaultOptions.checkProtoEql;
+  if(typeof opts.checkSubType !== 'boolean')
+    opts.checkSubType = defaultOptions.checkSubType;
+
   var r = eqInternal(a, b, opts, [], [], []);
   return r;
 }
