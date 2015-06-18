@@ -1,6 +1,6 @@
 {
   "name": "should-equal",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Deep comparison of 2 instances for should.js",
   "main": "index.js",
   "scripts": {
@@ -26,6 +26,6 @@
     "mocha-better-spec-reporter": "latest"
   },
   "dependencies": {
-    "should-type": "0.1.1"
+    "should-type": "0.2.0"
   }
 }
