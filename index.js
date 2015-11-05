@@ -35,17 +35,29 @@ var REASON = {
   MAP_VALUE_EQUALITY: 'Values of the same key in A and B is not equal'
 };
 
-function eqInternal(a, b, opts, stackA, stackB, path) {
+
+function eqInternal(a, b, opts, stackA, stackB, path, fails) {
   var r = EQUALS;
 
   function result(comparison, reason) {
-    return makeResult(comparison, path, reason, a, b);
+    if(arguments.length > 2) {
+      var args = Array.prototype.slice.call(arguments, 2);
+      reason = format.apply(null, [reason].concat(args));
+    }
+    var res = makeResult(comparison, path, reason, a, b);
+    if(!comparison && opts.collectAllFails) {
+      fails.push(res);
+    }
+    return res;
   }
 
   function checkPropertyEquality(property) {
-    return eqInternal(a[property], b[property], opts, stackA, stackB, path.concat([property]));
+    return eqInternal(a[property], b[property], opts, stackA, stackB, path.concat([property]), fails);
   }
 
+  function checkAlso(a1, b1) {
+    return eqInternal(a1, b1, opts, stackA, stackB, path, fails);
+  }
 
   // equal a and b exit early
   if(a === b) {
@@ -58,11 +70,13 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
   var typeA = getType(a),
     typeB = getType(b);
 
-  // if objects has different types they are not equals
-  var typeDifferents = typeA.type !== typeB.type || typeA.cls !== typeB.cls;
+  var key;
 
-  if(typeDifferents || ((opts.checkSubType && typeA.sub !== typeB.sub) || !opts.checkSubType)) {
-    return result(false, format(REASON.DIFFERENT_TYPES, typeToString(typeA), typeToString(typeB)));
+  // if objects has different types they are not equal
+  var typeDifferent = typeA.type !== typeB.type || typeA.cls !== typeB.cls;
+
+  if(typeDifferent || ((opts.checkSubType && typeA.sub !== typeB.sub) || !opts.checkSubType)) {
+    return result(false, REASON.DIFFERENT_TYPES, typeToString(typeA), typeToString(typeB));
   }
 
   //early checks for types
@@ -78,11 +92,11 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
       return result(a === b, REASON.EQUALITY);
 
     case 'function':
-      var fA = a.toString(), fB = b.toString();
-      r = eqInternal(fA, fB, opts, stackA, stackB, path);
+      // functions are compared by their source code
+      r = checkAlso(a.toString(), b.toString());
       if(!r.result) {
         r.reason = REASON.FUNCTION_SOURCES;
-        return r;
+        if(!opts.collectAllFails) return r;
       }
 
       break;//check user properties
@@ -96,14 +110,15 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
           p = ['source', 'global', 'multiline', 'lastIndex', 'ignoreCase'];
           while(p.length) {
             r = checkPropertyEquality(p.shift());
-            if(!r.result) return r;
+            if(!r.result && !opts.collectAllFails) return r;
           }
           break;//check user properties
 
-        //check by timestamp only
+        //check by timestamp only (using .valueOf)
         case 'date':
           if(+a !== +b) {
-            return result(false, REASON.EQUALITY);
+            r = result(false, REASON.EQUALITY);
+            if(!r.result && !opts.collectAllFails) return r;
           }
           break;//check user properties
 
@@ -111,10 +126,11 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
         case 'number':
         case 'boolean':
         case 'string':
-          r = eqInternal(a.valueOf(), b.valueOf(), opts, stackA, stackB, path);
+          //check their internal value
+          r = checkAlso(a.valueOf(), b.valueOf());
           if(!r.result) {
             r.reason = REASON.WRAPPED_VALUE;
-            return r;
+            if(!opts.collectAllFails) return r;
           }
           break;//check user properties
 
@@ -122,12 +138,12 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
         case 'buffer':
           //if length different it is obviously different
           r = checkPropertyEquality('length');
-          if(!r.result) return r;
+          if(!r.result && !opts.collectAllFails) return r;
 
           l = a.length;
           while(l--) {
             r = checkPropertyEquality(l);
-            if(!r.result) return r;
+            if(!r.result && !opts.collectAllFails) return r;
           }
 
           //we do not check for user properties because
@@ -139,7 +155,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
           p = ['name', 'message'];
           while(p.length) {
             r = checkPropertyEquality(p.shift());
-            if(!r.result) return r;
+            if(!r.result && !opts.collectAllFails) return r;
           }
 
           break;//check user properties
@@ -148,20 +164,20 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
         case 'arguments':
         case 'typed-array':
           r = checkPropertyEquality('length');
-          if(!r.result) return r;
+          if(!r.result && !opts.collectAllFails) return r;
 
           break;//check user properties
 
         case 'array-buffer':
           r = checkPropertyEquality('byteLength');
-          if(!r.result) return r;
+          if(!r.result && !opts.collectAllFails) return r;
 
           break;//check user properties
 
         case 'map':
         case 'set':
           r = checkPropertyEquality('size');
-          if(!r.result) return r;
+          if(!r.result && !opts.collectAllFails) return r;
 
           stackA.push(a);
           stackB.push(b);
@@ -170,7 +186,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
           var nextA = itA.next();
 
           while(!nextA.done) {
-            var key = nextA.value[0];
+            key = nextA.value[0];
             //first check for primitive key if we can do light check
             //using .has and .get
             if(getType(key).type != 'object') {
@@ -178,13 +194,13 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
                 if(typeA.cls == 'map') {
                   //for map we also check its value to be equal
                   var value = b.get(key);
-                  r = eqInternal(nextA.value[1], value, opts, stackA, stackB, path);
+                  r = checkAlso(nextA.value[1], value);
                   if(!r.result) {
                     r.a = nextA.value;
                     r.b = value;
                     r.reason = REASON.MAP_VALUE_EQUALITY;
 
-                    break;
+                    if(!opts.collectAllFails) break;
                   }
                 }
 
@@ -193,7 +209,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
                 r.a = key;
                 r.b = key;
 
-                break;
+                if(!opts.collectAllFails) break;
               }
             } else {
               //heavy check
@@ -203,7 +219,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
 
               while(!nextB.done) {
                 //first check for keys
-                r = eqInternal(nextA.value[0], nextB.value[0], opts, stackA, stackB, path);
+                r = checkAlso(nextA.value[0], nextB.value[0]);
 
                 if(!r.result) {
                   r.reason = REASON.SET_MAP_MISSING_KEY;
@@ -211,7 +227,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
                   r.b = key;
                 } else {
                   if(typeA.cls == 'map') {
-                    r = eqInternal(nextA.value[1], nextB.value[1], opts, stackA, stackB, path);
+                    r = checkAlso(nextA.value[1], nextB.value[1]);
 
                     if(!r.result) {
                       r.a = nextA.value;
@@ -220,16 +236,14 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
                     }
                   }
 
-                  break;
+                  if(!opts.collectAllFails) break;
                 }
 
                 nextB = itB.next();
               }
             }
 
-            if(!r.result) {
-              break;
-            }
+            if(!r.result && !opts.collectAllFails) break;
 
             nextA = itA.next();
           }
@@ -239,7 +253,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
 
           if(!r.result) {
             r.reason = REASON.SET_MAP_MISSING_ENTRY;
-            return r;
+            if(!opts.collectAllFails) return r;
           }
 
           break; //check user properties
@@ -261,32 +275,24 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
   stackA.push(a);
   stackB.push(b);
 
-  var key;
-
   for(key in b) {
     if(hasOwnProperty.call(b, key)) {
-      r = result(hasOwnProperty.call(a, key), format(REASON.MISSING_KEY, 'A', key));
-      if(!r.result) {
-        break;
-      }
+      r = result(hasOwnProperty.call(a, key), REASON.MISSING_KEY, 'A', key);
+      if(!r.result && !opts.collectAllFails) break;
 
       if(r.result) {
         r = checkPropertyEquality(key);
-        if(!r.result) {
-          break;
-        }
+        if(!r.result && !opts.collectAllFails) break;
       }
     }
   }
 
-  if(r.result) {
+  if(r.result || opts.collectAllFails) {
     // ensure both objects have the same number of properties
     for(key in a) {
       if(hasOwnProperty.call(a, key)) {
-        r = result(hasOwnProperty.call(b, key), format(REASON.MISSING_KEY, 'B', key));
-        if(!r.result) {
-          return r;
-        }
+        r = result(hasOwnProperty.call(b, key), REASON.MISSING_KEY, 'B', key);
+        if(!r.result && !opts.collectAllFails) return r;
       }
     }
   }
@@ -294,7 +300,7 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
   stackA.pop();
   stackB.pop();
 
-  if(!r.result) return r;
+  if(!r.result && !opts.collectAllFails) return r;
 
   var prototypesEquals = false, canComparePrototypes = false;
 
@@ -302,15 +308,12 @@ function eqInternal(a, b, opts, stackA, stackB, path) {
     if(Object.getPrototypeOf) {//TODO should i check prototypes for === or use eq?
       prototypesEquals = Object.getPrototypeOf(a) === Object.getPrototypeOf(b);
       canComparePrototypes = true;
-    } else if(a.__proto__ && b.__proto__) {
-      prototypesEquals = a.__proto__ === b.__proto__;
-      canComparePrototypes = true;
     }
 
     if(canComparePrototypes && !prototypesEquals) {
       r = result(prototypesEquals, REASON.EQUALITY_PROTOTYPE);
       r.showReason = true;
-      if(!r.result) {
+      if(!r.result && !opts.collectAllFails) {
         return r;
       }
     }
@@ -326,13 +329,16 @@ var defaultOptions = {
 
 function eq(a, b, opts) {
   opts = opts || {};
-  if(typeof opts.checkProtoEql !== 'boolean')
+  if(typeof opts.checkProtoEql !== 'boolean') {
     opts.checkProtoEql = defaultOptions.checkProtoEql;
-  if(typeof opts.checkSubType !== 'boolean')
+  }
+  if(typeof opts.checkSubType !== 'boolean') {
     opts.checkSubType = defaultOptions.checkSubType;
+  }
 
-  var r = eqInternal(a, b, opts, [], [], []);
-  return r;
+  var fails = [];
+  var r = eqInternal(a, b, opts, [], [], [], fails);
+  return opts.collectAllFails ? fails : r;
 }
 
 module.exports = eq;
