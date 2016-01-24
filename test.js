@@ -1,8 +1,8 @@
 var assert = require('assert');
 var equal = require('./index');
 
-function eq(a, b) {
-  var r = equal(a, b);
+function eq(a, b, opts) {
+  var r = equal(a, b, opts);
   var msg = !r.result && (r.reason + ' at ' + r.path + ' ' + r.a + ' =/= ' + r.b);
   if(!r.result) {
     assert.equal(a, b, msg);
@@ -10,8 +10,8 @@ function eq(a, b) {
 
 }
 
-function ne(a, b) {
-  var r = equal(a, b);
+function ne(a, b, opts) {
+  var r = equal(a, b, opts);
   assert.ok(!r.result);
 }
 
@@ -417,4 +417,10 @@ it('es6 maps', function() {
     ne(m4, m5);
     eq(m5, m6);
   }
+});
+
+it('should treat -0 and +0 as equal when param passed', function() {
+  ne(-0, +0);
+
+  eq(-0, +0, { plusZeroAndMinusZeroEqual: true });
 });
