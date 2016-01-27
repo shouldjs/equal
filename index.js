@@ -84,7 +84,6 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
     case 'number':
       // NaN !== NaN
       return (a !== a) ? result(b !== b, REASON.NAN_NUMBER)
-        // but treat `+0` vs. `-0` as not equal
         : result(a === b, REASON.EQUALITY);
 
     case 'boolean':
