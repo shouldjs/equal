@@ -85,8 +85,7 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
       // NaN !== NaN
       return (a !== a) ? result(b !== b, REASON.NAN_NUMBER)
         // but treat `+0` vs. `-0` as not equal
-        : (a === 0 ? result((1 / a == 1 / b) || opts.plusZeroAndMinusZeroEqual, REASON.PLUS_0_AND_MINUS_0)
-        : result(a === b, REASON.EQUALITY));
+        : result(a === b, REASON.EQUALITY);
 
     case 'boolean':
     case 'string':
