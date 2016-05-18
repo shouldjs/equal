@@ -329,18 +329,15 @@ var defaultOptions = {
 
 function eq(a, b, opts) {
   opts = opts || {};
-  if(typeof opts.checkProtoEql !== 'boolean') {
-    opts.checkProtoEql = defaultOptions.checkProtoEql;
-  }
-  if(typeof opts.checkSubType !== 'boolean') {
-    opts.checkSubType = defaultOptions.checkSubType;
-  }
-  if(typeof opts.plusZeroAndMinusZeroEqual !== 'boolean') {
-    opts.plusZeroAndMinusZeroEqual = defaultOptions.plusZeroAndMinusZeroEqual;
-  }
+
+  var newOpts = {
+    checkProtoEql: typeof opts.checkProtoEql !== 'boolean' ? defaultOptions.checkProtoEql : opts.checkProtoEql,
+    checkSubType: typeof opts.checkSubType !== 'boolean' ? defaultOptions.checkSubType : opts.checkSubType,
+    plusZeroAndMinusZeroEqual: typeof opts.plusZeroAndMinusZeroEqual !== 'boolean' ? defaultOptions.plusZeroAndMinusZeroEqual : opts.plusZeroAndMinusZeroEqual,
+  };
 
   var fails = [];
-  var r = eqInternal(a, b, opts, [], [], [], fails);
+  var r = eqInternal(a, b, newOpts, [], [], [], fails);
   return opts.collectAllFails ? fails : r;
 }
 
