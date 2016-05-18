@@ -424,3 +424,11 @@ it('should treat -0 and +0 as equal when param passed', function() {
 
   eq(-0, +0, { plusZeroAndMinusZeroEqual: true });
 });
+
+it('should work with Symbols', function() {
+  if(typeof Symbol !== 'undefined') {
+    eq([Symbol()], [Symbol()]);
+    eq(Symbol(), Symbol());
+    eq(Symbol('abc'), Symbol('abc'));
+  }
+});

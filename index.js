@@ -265,8 +265,8 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
 
   l = stackA.length;
   while(l--) {
-    if(stackA[l] == a) {
-      return result(stackB[l] == b, REASON.CIRCULAR_VALUES);
+    if(stackA[l] === a) {
+      return result(stackB[l] === b, REASON.CIRCULAR_VALUES);
     }
   }
 
