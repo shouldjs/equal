@@ -86,6 +86,7 @@ function eqInternal(a, b, opts, stackA, stackB, path, fails) {
       return (a !== a) ? result(b !== b, REASON.NAN_NUMBER)
         : result(a === b, REASON.EQUALITY);
 
+    case 'symbol':
     case 'boolean':
     case 'string':
       return result(a === b, REASON.EQUALITY);

@@ -427,8 +427,11 @@ it('should treat -0 and +0 as equal when param passed', function() {
 
 it('should work with Symbols', function() {
   if(typeof Symbol !== 'undefined') {
-    eq([Symbol()], [Symbol()]);
-    eq(Symbol(), Symbol());
-    eq(Symbol('abc'), Symbol('abc'));
+    ne([Symbol()], [Symbol()]);
+    eq([Symbol.for("a")], [Symbol.for("a")]);
+    ne(Symbol(), Symbol());
+    ne(Symbol('abc'), Symbol('abc'));
+    eq(Symbol.for("a"), Symbol.for("a"));
+    ne(Symbol.for("a"), Symbol.for("b"));
   }
 });
