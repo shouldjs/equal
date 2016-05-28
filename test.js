@@ -1,10 +1,12 @@
 var assert = require('assert');
-var equal = require('./index');
+var equal = require('.');
 
 function eq(a, b, opts) {
   var r = equal(a, b, opts);
-  var msg = !r.result && (r.reason + ' at ' + r.path + ' ' + r.a + ' =/= ' + r.b);
-  if(!r.result) {
+  if (r.length !== 0) {
+    r = r[0];
+    var msg = (r.reason + ' at ' + r.path + ' ' + r.a + ' =/= ' + r.b);
+
     assert.equal(a, b, msg);
   }
 
@@ -12,7 +14,7 @@ function eq(a, b, opts) {
 
 function ne(a, b, opts) {
   var r = equal(a, b, opts);
-  assert.ok(!r.result);
+  assert.ok(r.length !== 0);
 }
 
 /* 1. simple tests */
@@ -80,9 +82,6 @@ it("regex lit's w diff. patterns, same flags aren't eq", function() {
 it("regex lit's w same patterns, diff. flags aren't eq", function() {
   return ne(/^abc[a-zA-Z]/, /^abc[a-zA-Z]/i);
 });
-it("+0 should ne -0", function() {
-  return ne(+0, -0);
-});
 it("number obj not eqs primitive number of same value", function() {
   return ne(5, new Number(5));
 });
@@ -110,14 +109,14 @@ it("obj w undef member not eqs other obj w/out same member", function() {
 });
 it("fn1: functions w same source are eq", function() {
   var d, e;
-  d = function( a, b, c ){ return a * b * c; };
-  e = function( a, b, c ){ return a * b * c; };
+  d = function( a, b, c ) { return a * b * c; };
+  e = function( a, b, c ) { return a * b * c; };
   return eq(d, e);
 });
 it("fn2: functions w diff source aren't eq", function() {
   var d, e;
-  d = function( a, b, c ){ return a * b * c; };
-  e = function( a, b, c ){ return a  *  b  *  c; };
+  d = function( a, b, c ) { return a * b * c; };
+  e = function( a, b, c ) { return a  *  b  *  c; };
   return ne(d, e);
 });
 it("fn3: equal functions w equal props are eq", function() {
@@ -220,14 +219,14 @@ it("str obj w props not eq same str, other props (circ)", function() {
   e['def'] = c;
   return ne(d, e);
 });
-/*it("(1) circ arrays w similar layout, same values aren't eq"] = function() {
+/*it("(1) circ arrays w similar layout, same values aren't eq", function() {
   var d, e;
   d = [1, 2, 3];
   d.push(d);
   e = [1, 2, 3];
   e.push(d);
   return ne(d, e);
-};*/
+});*/
 it("(2) circ arrays w same layout, same values are eq", function() {
   var d, e;
   d = [1, 2, 3];
@@ -373,7 +372,7 @@ it('Check object prototypes', function() {
 });
 
 it('typed arrays and array buffer', function() {
-  if(typeof Uint8Array !== 'undefined') {
+  if (typeof Uint8Array !== 'undefined') {
     var arr1 = new Uint8Array([21, 31]);
     var arr2 = new Uint8Array([21, 31]);
 
@@ -384,7 +383,7 @@ it('typed arrays and array buffer', function() {
 });
 
 it('es6 sets', function() {
-  if(typeof Set !== 'undefined') {
+  if (typeof Set !== 'undefined') {
     var s1 = new Set([1, 2, 3]);
     var s2 = new Set([1, 2, 3]);
     var s3 = new Set(['a', 'b', 'c']);
@@ -402,7 +401,7 @@ it('es6 sets', function() {
 });
 
 it('es6 maps', function() {
-  if(typeof Map !== 'undefined') {
+  if (typeof Map !== 'undefined') {
     var m1 = new Map([[1, 1], [2, 2], [3, 3]]);
     var m2 = new Map([[1, 1], [2, 2], [3, 3]]);
 
@@ -419,14 +418,14 @@ it('es6 maps', function() {
   }
 });
 
-it('should treat -0 and +0 as equal when param passed', function() {
-  ne(-0, +0);
+it('should treat -0 and +0 as not equal when param not passed', function() {
+  eq(-0, +0);
 
-  eq(-0, +0, { plusZeroAndMinusZeroEqual: true });
+  ne(-0, +0, { plusZeroAndMinusZeroEqual: false });
 });
 
 it('should work with Symbols', function() {
-  if(typeof Symbol !== 'undefined') {
+  if (typeof Symbol !== 'undefined') {
     ne([Symbol()], [Symbol()]);
     eq([Symbol.for("a")], [Symbol.for("a")]);
     ne(Symbol(), Symbol());
@@ -434,4 +433,24 @@ it('should work with Symbols', function() {
     eq(Symbol.for("a"), Symbol.for("a"));
     ne(Symbol.for("a"), Symbol.for("b"));
   }
+});
+
+it('should support node Buffer', function() {
+  if (typeof Buffer !== 'undefined') {
+    var b1 = new Buffer('abc', 'utf8');
+    var b2 = new Buffer('abc', 'utf8');
+    var b3 = new Buffer('acc', 'utf8');
+
+    eq(b1, b2);
+    ne(b1, b3);
+  }
+});
+
+it('should not assume object with only the same properties are equal', function() {
+  var F = function(a, b) { this.a = a; this.b = b; };
+
+  var f = new F(19, 11);
+  var f1 = { a: 19, b: 11 };
+  ne(f, f1);
+  eq(f, f1, { checkProtoEql: false });
 });
