@@ -1,10 +1,16 @@
 {
   "name": "should-equal",
-  "version": "0.8.0",
+  "version": "1.0.0",
   "description": "Deep comparison of 2 instances for should.js",
-  "main": "index.js",
+  "main": "cjs/should-equal.js",
+  "jsnext:main": "es6/should-equal.js",
   "scripts": {
-    "test": "mocha --ui bdd -R mocha-better-spec-reporter test.js"
+    "test": "mocha --ui bdd -R mocha-better-spec-reporter test.js",
+    "cjs": "rollup --format=cjs --output=cjs/should-equal.js index.js",
+    "es6": "rollup --format=es6 --output=es6/should-equal.js index.js",
+    "build": "npm run cjs && npm run es6",
+    "prepublish": "npm run build",
+    "pretest": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -24,9 +30,16 @@
   "devDependencies": {
     "eslint": "^2.0.0",
     "mocha": "latest",
-    "mocha-better-spec-reporter": "latest"
+    "mocha-better-spec-reporter": "latest",
+    "rollup": "^0.26.3"
   },
   "dependencies": {
-    "should-type": "0.2.0"
-  }
+    "should-type": "^1.0.0"
+  },
+  "files": [
+    "cjs/*",
+    "es6/*",
+    "README.md",
+    "LICENSE"
+  ]
 }
