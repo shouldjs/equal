@@ -32,7 +32,7 @@
     "eslint-config-shouldjs": "^1.0.2",
     "mocha": "latest",
     "mocha-better-spec-reporter": "latest",
-    "rollup": "^0.26.3"
+    "rollup": "0.34.7"
   },
   "dependencies": {
     "should-type": "^1.0.0"
