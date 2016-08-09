@@ -1,4 +1,4 @@
-import getType from 'should-type';
+import t from 'should-type';
 import format from './format';
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -10,8 +10,8 @@ function EqualityFail(a, b, reason, path) {
   this.path = path;
 }
 
-function typeToString(t) {
-  return t.type + (t.cls ? '(' + t.cls + (t.sub ? ' ' + t.sub : '') + ')' : '');
+function typeToString(tp) {
+  return tp.type + (tp.cls ? '(' + tp.cls + (tp.sub ? ' ' + tp.sub : '') + ')' : '');
 }
 
 var  PLUS_0_AND_MINUS_0 = '+0 is not equal to -0';
@@ -96,13 +96,11 @@ EQ.prototype = {
       return this.collectFail(a === 0 && (1 / a !== 1 / b) && !this.plusZeroAndMinusZeroEqual, PLUS_0_AND_MINUS_0);
     }
 
-    var typeA = getType(a);
-    var typeB = getType(b);
+    var typeA = t(a);
+    var typeB = t(b);
 
     // if objects has different types they are not equal
-    var typeDifferent = typeA.type !== typeB.type || typeA.cls !== typeB.cls;
-
-    if (typeDifferent || ((this.checkSubType && typeA.sub !== typeB.sub) || !this.checkSubType)) {
+    if (typeA.type !== typeB.type || typeA.cls !== typeB.cls || typeA.sub !== typeB.sub) {
       return this.collectFail(true, format(DIFFERENT_TYPES, typeToString(typeA), typeToString(typeB)));
     }
 
@@ -179,30 +177,30 @@ EQ.prototype = {
   },
 
   checkPropertyEquality: function(propertyName) {
-    var eq = new EQ(this, this.a[propertyName], this.b[propertyName], this.path.concat([propertyName]));
-    eq.check0();
+    var _eq = new EQ(this, this.a[propertyName], this.b[propertyName], this.path.concat([propertyName]));
+    _eq.check0();
   },
 
   defaultCheck: EQ.checkStrictEquality
 };
 
 
-EQ.add('number', function(a, b) {
+EQ.add(t.NUMBER, function(a, b) {
   this.collectFail((a !== a && b === b) || (b !== b && a === a) || (a !== b && a === a && b === b), EQUALITY);
 });
 
-['symbol', 'boolean', 'string'].forEach(function(tp) {
+[t.SYMBOL, t.BOOLEAN, t.STRING].forEach(function(tp) {
   EQ.add(tp, EQ.checkStrictEquality);
 });
 
-EQ.add('function', function(a, b) {
+EQ.add(t.FUNCTION, function(a, b) {
   // functions are compared by their source code
   this.collectFail(a.toString() !== b.toString(), FUNCTION_SOURCES);
   // check user properties
   this.checkPlainObjectsEquality(a, b);
 });
 
-EQ.add('object', 'regexp', function(a, b) {
+EQ.add(t.OBJECT, t.REGEXP, function(a, b) {
   // check regexp flags
   var flags = ['source', 'global', 'multiline', 'lastIndex', 'ignoreCase', 'sticky', 'unicode'];
   while (flags.length) {
@@ -212,15 +210,15 @@ EQ.add('object', 'regexp', function(a, b) {
   this.checkPlainObjectsEquality(a, b);
 });
 
-EQ.add('object', 'date', function(a, b) {
+EQ.add(t.OBJECT, t.DATE, function(a, b) {
   //check by timestamp only (using .valueOf)
   this.collectFail(+a !== +b, EQUALITY);
   // check user properties
   this.checkPlainObjectsEquality(a, b);
 });
 
-['number', 'boolean', 'string'].forEach(function(tp) {
-  EQ.add('object', tp, function(a, b) {
+[t.NUMBER, t.BOOLEAN, t.STRING].forEach(function(tp) {
+  EQ.add(t.OBJECT, tp, function(a, b) {
     //primitive type wrappers
     this.collectFail(a.valueOf() !== b.valueOf(), WRAPPED_VALUE);
     // check user properties
@@ -228,32 +226,32 @@ EQ.add('object', 'date', function(a, b) {
   });
 });
 
-EQ.add('object', function(a, b) {
+EQ.add(t.OBJECT, function(a, b) {
   this.checkPlainObjectsEquality(a, b);
 });
 
-['array', 'arguments', 'typed-array'].forEach(function(tp) {
-  EQ.add('object', tp, function(a, b) {
+[t.ARRAY, t.ARGUMENTS, t.TYPED_ARRAY].forEach(function(tp) {
+  EQ.add(t.OBJECT, tp, function(a, b) {
     this.checkPropertyEquality('length');
 
     this.checkPlainObjectsEquality(a, b);
   });
 });
 
-EQ.add('object', 'array-buffer', function(a, b) {
+EQ.add(t.OBJECT, t.ARRAY_BUFFER, function(a, b) {
   this.checkPropertyEquality('byteLength');
 
   this.checkPlainObjectsEquality(a, b);
 });
 
-EQ.add('object', 'error', function(a, b) {
+EQ.add(t.OBJECT, t.ERROR, function(a, b) {
   this.checkPropertyEquality('name');
   this.checkPropertyEquality('message');
 
   this.checkPlainObjectsEquality(a, b);
 });
 
-EQ.add('object', 'buffer', function(a) {
+EQ.add(t.OBJECT, t.BUFFER, function(a) {
   this.checkPropertyEquality('length');
 
   var l = a.length;
@@ -265,8 +263,8 @@ EQ.add('object', 'buffer', function(a) {
   //node Buffer have some strange hidden properties
 });
 
-['map', 'set'].forEach(function(tp) {
-  EQ.add('object', tp, function(a, b) {
+[t.MAP, t.SET, t.WEAK_MAP, t.WEAK_SET].forEach(function(tp) {
+  EQ.add(t.OBJECT, tp, function(a, b) {
     this._meet.push([a, b]);
 
     var iteratorA = a.entries();
