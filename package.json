@@ -1,6 +1,6 @@
 {
   "name": "should-equal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Deep comparison of 2 instances for should.js",
   "main": "cjs/should-equal.js",
   "jsnext:main": "es6/should-equal.js",
