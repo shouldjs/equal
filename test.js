@@ -440,12 +440,15 @@ it("es6 sets", function() {
     var s3 = new Set(["a", "b", "c"]);
     var s4 = new Set([]);
 
-    var s5 = new Set([{ a: 1 }, { a: 1 }, { a: 1 }]);
-    var s6 = new Set([{ a: 1 }, { a: 1 }, { a: 1 }]);
-
     eq(s1, s2);
     ne(s1, s3);
     ne(s1, s4);
+
+    var k1 = { a: 1 };
+
+    var s5 = new Set([k1, k1, k1]);
+    var s6 = new Set([k1, k1, k1]);
+
     ne(s1, s5);
     eq(s5, s6);
   }
@@ -455,17 +458,29 @@ it("es6 maps", function() {
   if (typeof Map !== "undefined") {
     var m1 = new Map([[1, 1], [2, 2], [3, 3]]);
     var m2 = new Map([[1, 1], [2, 2], [3, 3]]);
-
     var m3 = new Map([[1, 2], [2, 3], [3, 4]]);
-    var m4 = new Map([[{ a: 10 }, 2], [{ a: 11 }, 2], [{ a: 12 }, 2]]);
-    var m5 = new Map([[{ a: 11 }, 2], [{ a: 12 }, 2], [{ a: 13 }, 2]]);
-    var m6 = new Map([[{ a: 11 }, 2], [{ a: 12 }, 2], [{ a: 13 }, 2]]);
 
     eq(m1, m1);
     eq(m1, m2);
     ne(m3, m2);
+
+    var key_a10 = { a: 10 };
+    var key_a11 = { a: 11 };
+    var key_a12 = { a: 12 };
+    var key_a13 = { a: 13 };
+    var m4 = new Map([[key_a10, 2], [key_a11, 2], [key_a12, 2]]);
+    var m5 = new Map([[key_a11, 2], [key_a12, 2], [key_a13, 2]]);
+    var m6 = new Map([[key_a11, 2], [key_a12, 2], [key_a13, 2]]);
+
     ne(m4, m5);
     eq(m5, m6);
+
+    var m7 = new Map([[{}, 1], [{}, 2]]);
+    var m8 = new Map([[{}, 2], [{}, 3]]);
+    var m9 = new Map([[{}, 2], [{}, 3]]);
+
+    ne(m7, m8);
+    ne(m9, m8);
   }
 });
 

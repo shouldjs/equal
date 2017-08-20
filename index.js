@@ -265,36 +265,52 @@ EQ.add(t.OBJECT, t.BUFFER, function(a) {
   //node Buffer have some strange hidden properties
 });
 
-[t.MAP, t.SET].forEach(function(tp) {
-  EQ.add(t.OBJECT, tp, function(a, b) {
-    this._meet.push([a, b]);
+function checkMapByKeys(a, b) {
+  var iteratorA = a.keys();
 
-    var iteratorA = a.entries();
-    for (var nextA = iteratorA.next(); !nextA.done; nextA = iteratorA.next()) {
-      var iteratorB = b.entries();
-      var keyFound = false;
-      for (var nextB = iteratorB.next(); !nextB.done; nextB = iteratorB.next()) {
-        // try to check keys first
-        var r = eq(nextA.value[0], nextB.value[0], { collectAllFails: false, _meet: this._meet });
+  for (var nextA = iteratorA.next(); !nextA.done; nextA = iteratorA.next()) {
+    var key = nextA.value;
+    var hasKey = b.has(key);
+    this.collectFail(!hasKey, format(SET_MAP_MISSING_KEY, key));
 
-        if (r.length === 0) {
-          keyFound = true;
+    if (hasKey) {
+      var valueB = b.get(key);
+      var valueA = a.get(key);
 
-          // check values also
-          eq(nextA.value[1], nextB.value[1], this);
-        }
-      }
-
-      if (!keyFound) {
-        // no such key at all
-        this.collectFail(true, format(SET_MAP_MISSING_KEY, nextA.value[0]));
-      }
+      eq(valueA, valueB, this);
     }
+  }
+}
 
-    this._meet.pop();
+function checkSetByKeys(a, b) {
+  var iteratorA = a.keys();
 
-    this.checkPlainObjectsEquality(a, b);
-  });
+  for (var nextA = iteratorA.next(); !nextA.done; nextA = iteratorA.next()) {
+    var key = nextA.value;
+    var hasKey = b.has(key);
+    this.collectFail(!hasKey, format(SET_MAP_MISSING_KEY, key));
+  }
+}
+
+EQ.add(t.OBJECT, t.MAP, function(a, b) {
+  this._meet.push([a, b]);
+
+  checkMapByKeys.call(this, a, b);
+  checkMapByKeys.call(this, b, a);
+
+  this._meet.pop();
+
+  this.checkPlainObjectsEquality(a, b);
+});
+EQ.add(t.OBJECT, t.SET, function(a, b) {
+  this._meet.push([a, b]);
+
+  checkSetByKeys.call(this, a, b);
+  checkSetByKeys.call(this, b, a);
+
+  this._meet.pop();
+
+  this.checkPlainObjectsEquality(a, b);
 });
 
 export default function eq(a, b, opts) {
