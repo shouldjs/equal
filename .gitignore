@@ -26,3 +26,5 @@ node_modules
 .idea
 cjs
 es6
+
+/package-lock.json

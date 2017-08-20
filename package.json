@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha --ui bdd -R mocha-better-spec-reporter test.js",
     "cjs": "rollup --format=cjs --output=cjs/should-equal.js index.js",
-    "es6": "rollup --format=es6 --output=es6/should-equal.js index.js",
+    "es6": "rollup --format=es --output=es6/should-equal.js index.js",
     "build": "npm run cjs && npm run es6",
     "prepublish": "npm run build",
     "pretest": "npm run build"
@@ -16,11 +16,7 @@
     "type": "git",
     "url": "https://github.com/shouldjs/equal.git"
   },
-  "keywords": [
-    "should.js",
-    "deep",
-    "equal"
-  ],
+  "keywords": ["should.js", "deep", "equal"],
   "author": "Denis Bardadym <bardadymchik@gmail.com>",
   "license": "MIT",
   "bugs": {
@@ -37,10 +33,5 @@
   "dependencies": {
     "should-type": "^1.0.0"
   },
-  "files": [
-    "cjs/*",
-    "es6/*",
-    "README.md",
-    "LICENSE"
-  ]
+  "files": ["cjs/*", "es6/*", "README.md", "LICENSE"]
 }
