@@ -1,5 +1,5 @@
-import t from 'should-type';
-import format from './format';
+import t from "should-type";
+import format from "./format";
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -11,18 +11,17 @@ function EqualityFail(a, b, reason, path) {
 }
 
 function typeToString(tp) {
-  return tp.type + (tp.cls ? '(' + tp.cls + (tp.sub ? ' ' + tp.sub : '') + ')' : '');
+  return tp.type + (tp.cls ? "(" + tp.cls + (tp.sub ? " " + tp.sub : "") + ")" : "");
 }
 
-var  PLUS_0_AND_MINUS_0 = '+0 is not equal to -0';
-var  DIFFERENT_TYPES = 'A has type %s and B has type %s';
-var  EQUALITY = 'A is not equal to B';
-var  EQUALITY_PROTOTYPE = 'A and B have different prototypes';
-var  WRAPPED_VALUE = 'A wrapped value is not equal to B wrapped value';
-var  FUNCTION_SOURCES = 'function A is not equal to B by source code value (via .toString call)';
-var  MISSING_KEY = '%s has no key %s';
-var  SET_MAP_MISSING_KEY = 'Set/Map missing key %s';
-
+var PLUS_0_AND_MINUS_0 = "+0 is not equal to -0";
+var DIFFERENT_TYPES = "A has type %s and B has type %s";
+var EQUALITY = "A is not equal to B";
+var EQUALITY_PROTOTYPE = "A and B have different prototypes";
+var WRAPPED_VALUE = "A wrapped value is not equal to B wrapped value";
+var FUNCTION_SOURCES = "function A is not equal to B by source code value (via .toString call)";
+var MISSING_KEY = "%s has no key %s";
+var SET_MAP_MISSING_KEY = "Set/Map missing key %s";
 
 var DEFAULT_OPTIONS = {
   checkProtoEql: true,
@@ -32,18 +31,18 @@ var DEFAULT_OPTIONS = {
 };
 
 function setBooleanDefault(property, obj, opts, defaults) {
-  obj[property] = typeof opts[property] !== 'boolean' ? defaults[property] : opts[property];
+  obj[property] = typeof opts[property] !== "boolean" ? defaults[property] : opts[property];
 }
 
-var METHOD_PREFIX = '_check_';
+var METHOD_PREFIX = "_check_";
 
 function EQ(opts, a, b, path) {
   opts = opts || {};
 
-  setBooleanDefault('checkProtoEql', this, opts, DEFAULT_OPTIONS);
-  setBooleanDefault('plusZeroAndMinusZeroEqual', this, opts, DEFAULT_OPTIONS);
-  setBooleanDefault('checkSubType', this, opts, DEFAULT_OPTIONS);
-  setBooleanDefault('collectAllFails', this, opts, DEFAULT_OPTIONS);
+  setBooleanDefault("checkProtoEql", this, opts, DEFAULT_OPTIONS);
+  setBooleanDefault("plusZeroAndMinusZeroEqual", this, opts, DEFAULT_OPTIONS);
+  setBooleanDefault("checkSubType", this, opts, DEFAULT_OPTIONS);
+  setBooleanDefault("collectAllFails", this, opts, DEFAULT_OPTIONS);
 
   this.a = a;
   this.b = b;
@@ -56,8 +55,8 @@ function EQ(opts, a, b, path) {
 }
 
 function ShortcutError(fail) {
-  this.name = 'ShortcutError';
-  this.message = 'fail fast';
+  this.name = "ShortcutError";
+  this.message = "fail fast";
   this.fail = fail;
 }
 
@@ -70,7 +69,7 @@ EQ.checkStrictEquality = function(a, b) {
 EQ.add = function add(type, cls, sub, f) {
   var args = Array.prototype.slice.call(arguments);
   f = args.pop();
-  EQ.prototype[METHOD_PREFIX + args.join('_')] = f;
+  EQ.prototype[METHOD_PREFIX + args.join("_")] = f;
 };
 
 EQ.prototype = {
@@ -93,7 +92,7 @@ EQ.prototype = {
     // equal a and b exit early
     if (a === b) {
       // check for +0 !== -0;
-      return this.collectFail(a === 0 && (1 / a !== 1 / b) && !this.plusZeroAndMinusZeroEqual, PLUS_0_AND_MINUS_0);
+      return this.collectFail(a === 0 && 1 / a !== 1 / b && !this.plusZeroAndMinusZeroEqual, PLUS_0_AND_MINUS_0);
     }
 
     var typeA = t(a);
@@ -105,16 +104,21 @@ EQ.prototype = {
     }
 
     // as types the same checks type specific things
-    var name1 = typeA.type, name2 = typeA.type;
+    var name1 = typeA.type,
+      name2 = typeA.type;
     if (typeA.cls) {
-      name1 += '_' + typeA.cls;
-      name2 += '_' + typeA.cls;
+      name1 += "_" + typeA.cls;
+      name2 += "_" + typeA.cls;
     }
     if (typeA.sub) {
-      name2 += '_' + typeA.sub;
+      name2 += "_" + typeA.sub;
     }
 
-    var f = this[METHOD_PREFIX + name2] || this[METHOD_PREFIX + name1] || this[METHOD_PREFIX + typeA.type] || this.defaultCheck;
+    var f =
+      this[METHOD_PREFIX + name2] ||
+      this[METHOD_PREFIX + name1] ||
+      this[METHOD_PREFIX + typeA.type] ||
+      this.defaultCheck;
 
     f.call(this, this.a, this.b);
   },
@@ -155,7 +159,7 @@ EQ.prototype = {
         if (hasOwnProperty.call(a, key)) {
           this.checkPropertyEquality(key);
         } else {
-          this.collectFail(true, format(MISSING_KEY, 'A', key));
+          this.collectFail(true, format(MISSING_KEY, "A", key));
         }
       }
     }
@@ -163,7 +167,7 @@ EQ.prototype = {
     // ensure both objects have the same number of properties
     for (key in a) {
       if (hasOwnProperty.call(a, key)) {
-        this.collectFail(!hasOwnProperty.call(b, key), format(MISSING_KEY, 'B', key));
+        this.collectFail(!hasOwnProperty.call(b, key), format(MISSING_KEY, "B", key));
       }
     }
 
@@ -173,7 +177,6 @@ EQ.prototype = {
       //TODO should i check prototypes for === or use eq?
       this.collectFail(Object.getPrototypeOf(a) !== Object.getPrototypeOf(b), EQUALITY_PROTOTYPE, true);
     }
-
   },
 
   checkPropertyEquality: function(propertyName) {
@@ -183,7 +186,6 @@ EQ.prototype = {
 
   defaultCheck: EQ.checkStrictEquality
 };
-
 
 EQ.add(t.NUMBER, function(a, b) {
   this.collectFail((a !== a && b === b) || (b !== b && a === a) || (a !== b && a === a && b === b), EQUALITY);
@@ -202,7 +204,7 @@ EQ.add(t.FUNCTION, function(a, b) {
 
 EQ.add(t.OBJECT, t.REGEXP, function(a, b) {
   // check regexp flags
-  var flags = ['source', 'global', 'multiline', 'lastIndex', 'ignoreCase', 'sticky', 'unicode'];
+  var flags = ["source", "global", "multiline", "lastIndex", "ignoreCase", "sticky", "unicode"];
   while (flags.length) {
     this.checkPropertyEquality(flags.shift());
   }
@@ -232,27 +234,27 @@ EQ.add(t.OBJECT, function(a, b) {
 
 [t.ARRAY, t.ARGUMENTS, t.TYPED_ARRAY].forEach(function(tp) {
   EQ.add(t.OBJECT, tp, function(a, b) {
-    this.checkPropertyEquality('length');
+    this.checkPropertyEquality("length");
 
     this.checkPlainObjectsEquality(a, b);
   });
 });
 
 EQ.add(t.OBJECT, t.ARRAY_BUFFER, function(a, b) {
-  this.checkPropertyEquality('byteLength');
+  this.checkPropertyEquality("byteLength");
 
   this.checkPlainObjectsEquality(a, b);
 });
 
 EQ.add(t.OBJECT, t.ERROR, function(a, b) {
-  this.checkPropertyEquality('name');
-  this.checkPropertyEquality('message');
+  this.checkPropertyEquality("name");
+  this.checkPropertyEquality("message");
 
   this.checkPlainObjectsEquality(a, b);
 });
 
 EQ.add(t.OBJECT, t.BUFFER, function(a) {
-  this.checkPropertyEquality('length');
+  this.checkPropertyEquality("length");
 
   var l = a.length;
   while (l--) {
@@ -269,7 +271,6 @@ EQ.add(t.OBJECT, t.BUFFER, function(a) {
 
     var iteratorA = a.entries();
     for (var nextA = iteratorA.next(); !nextA.done; nextA = iteratorA.next()) {
-
       var iteratorB = b.entries();
       var keyFound = false;
       for (var nextB = iteratorB.next(); !nextB.done; nextB = iteratorB.next()) {
@@ -295,7 +296,6 @@ EQ.add(t.OBJECT, t.BUFFER, function(a) {
     this.checkPlainObjectsEquality(a, b);
   });
 });
-
 
 export default function eq(a, b, opts) {
   return new EQ(opts, a, b).check();

@@ -1,15 +1,14 @@
-var assert = require('assert');
-var equal = require('.');
+var assert = require("assert");
+var equal = require(".");
 
 function eq(a, b, opts) {
   var r = equal(a, b, opts);
   if (r.length !== 0) {
     r = r[0];
-    var msg = (r.reason + ' at ' + r.path + ' ' + r.a + ' =/= ' + r.b);
+    var msg = r.reason + " at " + r.path + " " + r.a + " =/= " + r.b;
 
     assert.equal(a, b, msg);
   }
-
 }
 
 function ne(a, b, opts) {
@@ -39,22 +38,28 @@ it("regex lit's w same pattern, flags are eq", function() {
   return eq(/^abc[a-zA-Z]/, /^abc[a-zA-Z]/);
 });
 it("pods w same properties are eq", function() {
-  return eq({
-    a: 'b',
-    c: 'd'
-  }, {
-    a: 'b',
-    c: 'd'
-  });
+  return eq(
+    {
+      a: "b",
+      c: "d"
+    },
+    {
+      a: "b",
+      c: "d"
+    }
+  );
 });
 it("pods that only differ wrt prop ord are eq", function() {
-  return eq({
-    a: 'b',
-    c: 'd'
-  }, {
-    c: 'd',
-    a: 'b'
-  });
+  return eq(
+    {
+      a: "b",
+      c: "d"
+    },
+    {
+      c: "d",
+      a: "b"
+    }
+  );
 });
 
 /* 1.2. negative */
@@ -65,7 +70,7 @@ it("obj in a list doesn't eq list in list", function() {
   return ne([{}], [[]]);
 });
 it("integer n doesn't eq rpr n", function() {
-  return ne(1234, '1234');
+  return ne(1234, "1234");
 });
 it("integer n doesn't eq n + 1", function() {
   return ne(1234, 1235);
@@ -74,7 +79,7 @@ it("empty list doesn't eq false", function() {
   return ne([], false);
 });
 it("list w an integer doesn't eq one w rpr n", function() {
-  return ne([3], ['3']);
+  return ne([3], ["3"]);
 });
 it("regex lit's w diff. patterns, same flags aren't eq", function() {
   return ne(/^abc[a-zA-Z]/, /^abc[a-zA-Z]x/);
@@ -86,7 +91,7 @@ it("number obj not eqs primitive number of same value", function() {
   return ne(5, new Number(5));
 });
 it("string obj not eqs primitive string of same value", function() {
-  return ne('helo', new String('helo'));
+  return ne("helo", new String("helo"));
 });
 it("(1) bool obj not eqs primitive bool of same value", function() {
   return ne(false, new Boolean(false));
@@ -109,14 +114,22 @@ it("obj w undef member not eqs other obj w/out same member", function() {
 });
 it("fn1: functions w same source are eq", function() {
   var d, e;
-  d = function( a, b, c ) { return a * b * c; };
-  e = function( a, b, c ) { return a * b * c; };
+  d = function(a, b, c) {
+    return a * b * c;
+  };
+  e = function(a, b, c) {
+    return a * b * c;
+  };
   return eq(d, e);
 });
 it("fn2: functions w diff source aren't eq", function() {
   var d, e;
-  d = function( a, b, c ) { return a * b * c; };
-  e = function( a, b, c ) { return a  *  b  *  c; };
+  d = function(a, b, c) {
+    return a * b * c;
+  };
+  e = function(a, b, c) {
+    return a * b * c;
+  };
   return ne(d, e);
 });
 it("fn3: equal functions w equal props are eq", function() {
@@ -125,15 +138,15 @@ it("fn3: equal functions w equal props are eq", function() {
     return null;
   };
   d.foo = {
-    some: 'meaningless',
-    properties: 'here'
+    some: "meaningless",
+    properties: "here"
   };
   e = function() {
     return null;
   };
   e.foo = {
-    some: 'meaningless',
-    properties: 'here'
+    some: "meaningless",
+    properties: "here"
   };
   return eq(d, e);
 });
@@ -143,32 +156,32 @@ it("fn4: equal functions w unequal props aren't eq", function() {
     return null;
   };
   d.foo = {
-    some: 'meaningless',
-    properties: 'here'
+    some: "meaningless",
+    properties: "here"
   };
   e = function() {
     return null;
   };
   e.foo = {
-    some: 'meaningless',
-    properties: 'here!!!'
+    some: "meaningless",
+    properties: "here!!!"
   };
   return ne(d, e);
 });
 it("list w named member eqs other list w same member", function() {
   var d, e;
-  d = ['foo', null, 3];
-  d['extra'] = 42;
-  e = ['foo', null, 3];
-  e['extra'] = 42;
+  d = ["foo", null, 3];
+  d["extra"] = 42;
+  e = ["foo", null, 3];
+  e["extra"] = 42;
   return eq(d, e);
 });
 it("list w named member doesn't eq list w same member, other value", function() {
   var d, e;
-  d = ['foo', null, 3];
-  d['extra'] = 42;
-  e = ['foo', null, 3];
-  e['extra'] = 108;
+  d = ["foo", null, 3];
+  d["extra"] = 42;
+  e = ["foo", null, 3];
+  e["extra"] = 108;
   return ne(d, e);
 });
 it("date eqs other date pointing to same time", function() {
@@ -186,37 +199,37 @@ it("date does not eq other date pointing to other time", function() {
 it("str obj w props eq same str, same props", function() {
   var d, e;
   d = new String("helo test");
-  d['abc'] = 42;
+  d["abc"] = 42;
   e = new String("helo test");
-  e['abc'] = 42;
+  e["abc"] = 42;
   return eq(d, e);
 });
 it("str obj w props not eq same str, other props", function() {
   var d, e;
   d = new String("helo test");
-  d['abc'] = 42;
+  d["abc"] = 42;
   e = new String("helo test");
-  e['def'] = 42;
+  e["def"] = 42;
   return ne(d, e);
 });
 it("str obj w props eq same str, same props (circ)", function() {
   var c, d, e;
-  c = ['a list'];
+  c = ["a list"];
   c.push(c);
   d = new String("helo test");
-  d['abc'] = c;
+  d["abc"] = c;
   e = new String("helo test");
-  e['abc'] = c;
+  e["abc"] = c;
   return eq(d, e);
 });
 it("str obj w props not eq same str, other props (circ)", function() {
   var c, d, e;
-  c = ['a list'];
+  c = ["a list"];
   c.push(c);
   d = new String("helo test");
-  d['abc'] = c;
+  d["abc"] = c;
   e = new String("helo test");
-  e['def'] = c;
+  e["def"] = c;
   return ne(d, e);
 });
 /*it("(1) circ arrays w similar layout, same values aren't eq", function() {
@@ -256,47 +269,83 @@ it("(fkling1) arrays w eq subarrays are eq", function() {
 it("joshwilsdon", function() {
   var count, d1, d2, errors, idx1, idx2, v1, v2, _i, _j, _len, _ref;
   d1 = [
-    NaN, void 0, null, true, false, Infinity, 0, 1, "a", "b", {
+    NaN,
+    void 0,
+    null,
+    true,
+    false,
+    Infinity,
+    0,
+    1,
+    "a",
+    "b",
+    {
       a: 1
-    }, {
+    },
+    {
       a: "a"
-    }, [
+    },
+    [
       {
         a: 1
       }
-    ], [
+    ],
+    [
       {
         a: true
       }
-    ], {
+    ],
+    {
       a: 1,
       b: 2
-    }, [1, 2], [1, 2, 3], {
+    },
+    [1, 2],
+    [1, 2, 3],
+    {
       a: "1"
-    }, {
+    },
+    {
       a: "1",
       b: "2"
     }
   ];
   d2 = [
-    NaN, void 0, null, true, false, Infinity, 0, 1, "a", "b", {
+    NaN,
+    void 0,
+    null,
+    true,
+    false,
+    Infinity,
+    0,
+    1,
+    "a",
+    "b",
+    {
       a: 1
-    }, {
+    },
+    {
       a: "a"
-    }, [
+    },
+    [
       {
         a: 1
       }
-    ], [
+    ],
+    [
       {
         a: true
       }
-    ], {
+    ],
+    {
       a: 1,
       b: 2
-    }, [1, 2], [1, 2, 3], {
+    },
+    [1, 2],
+    [1, 2, 3],
+    {
       a: "1"
-    }, {
+    },
+    {
       a: "1",
       b: "2"
     }
@@ -321,17 +370,17 @@ it("joshwilsdon", function() {
   }
   return [count, errors];
 });
-it('node buffer', function() {
-  eq(new Buffer('abc'), new Buffer('abc'));
-  ne(new Buffer('abc'), new Buffer('abc1'));
-  ne(new Buffer('abd'), new Buffer('abc'));
+it("node buffer", function() {
+  eq(new Buffer("abc"), new Buffer("abc"));
+  ne(new Buffer("abc"), new Buffer("abc1"));
+  ne(new Buffer("abd"), new Buffer("abc"));
 });
-it('RegExp with props', function() {
+it("RegExp with props", function() {
   var re1 = /a/;
   re1.lastIndex = 3;
   ne(re1, /a/);
 });
-it('Date with props', function() {
+it("Date with props", function() {
   var now = Date.now();
 
   var d1 = new Date(now);
@@ -341,9 +390,11 @@ it('Date with props', function() {
 
   ne(d1, d2);
 });
-it('Check object prototypes', function() {
+it("Check object prototypes", function() {
   var nbRoot = {
-    toString: function() { return this.first + ' ' + this.last; }
+    toString: function() {
+      return this.first + " " + this.last;
+    }
   };
 
   function nameBuilder(first, last) {
@@ -360,19 +411,19 @@ it('Check object prototypes', function() {
   }
   nameBuilder2.prototype = nbRoot;
 
-  var nb1 = new nameBuilder('Ryan', 'Dahl');
-  var nb2 = new nameBuilder2('Ryan', 'Dahl');
+  var nb1 = new nameBuilder("Ryan", "Dahl");
+  var nb2 = new nameBuilder2("Ryan", "Dahl");
 
   eq(nb1, nb2);
 
   nameBuilder2.prototype = Object;
-  nb2 = new nameBuilder2('Ryan', 'Dahl');
+  nb2 = new nameBuilder2("Ryan", "Dahl");
 
   ne(nb1, nb2);
 });
 
-it('typed arrays and array buffer', function() {
-  if (typeof Uint8Array !== 'undefined') {
+it("typed arrays and array buffer", function() {
+  if (typeof Uint8Array !== "undefined") {
     var arr1 = new Uint8Array([21, 31]);
     var arr2 = new Uint8Array([21, 31]);
 
@@ -382,15 +433,15 @@ it('typed arrays and array buffer', function() {
   }
 });
 
-it('es6 sets', function() {
-  if (typeof Set !== 'undefined') {
+it("es6 sets", function() {
+  if (typeof Set !== "undefined") {
     var s1 = new Set([1, 2, 3]);
     var s2 = new Set([1, 2, 3]);
-    var s3 = new Set(['a', 'b', 'c']);
+    var s3 = new Set(["a", "b", "c"]);
     var s4 = new Set([]);
 
-    var s5 = new Set([{ a: 1}, { a: 1}, { a: 1}]);
-    var s6 = new Set([{ a: 1}, { a: 1}, { a: 1}]);
+    var s5 = new Set([{ a: 1 }, { a: 1 }, { a: 1 }]);
+    var s6 = new Set([{ a: 1 }, { a: 1 }, { a: 1 }]);
 
     eq(s1, s2);
     ne(s1, s3);
@@ -400,15 +451,15 @@ it('es6 sets', function() {
   }
 });
 
-it('es6 maps', function() {
-  if (typeof Map !== 'undefined') {
+it("es6 maps", function() {
+  if (typeof Map !== "undefined") {
     var m1 = new Map([[1, 1], [2, 2], [3, 3]]);
     var m2 = new Map([[1, 1], [2, 2], [3, 3]]);
 
     var m3 = new Map([[1, 2], [2, 3], [3, 4]]);
-    var m4 = new Map([[{ a: 10}, 2], [{ a: 11}, 2], [{ a: 12}, 2]]);
-    var m5 = new Map([[{ a: 11}, 2], [{ a: 12}, 2], [{ a: 13}, 2]]);
-    var m6 = new Map([[{ a: 11}, 2], [{ a: 12}, 2], [{ a: 13}, 2]]);
+    var m4 = new Map([[{ a: 10 }, 2], [{ a: 11 }, 2], [{ a: 12 }, 2]]);
+    var m5 = new Map([[{ a: 11 }, 2], [{ a: 12 }, 2], [{ a: 13 }, 2]]);
+    var m6 = new Map([[{ a: 11 }, 2], [{ a: 12 }, 2], [{ a: 13 }, 2]]);
 
     eq(m1, m1);
     eq(m1, m2);
@@ -418,36 +469,39 @@ it('es6 maps', function() {
   }
 });
 
-it('should treat -0 and +0 as not equal when param not passed', function() {
+it("should treat -0 and +0 as not equal when param not passed", function() {
   eq(-0, +0);
 
   ne(-0, +0, { plusZeroAndMinusZeroEqual: false });
 });
 
-it('should work with Symbols', function() {
-  if (typeof Symbol !== 'undefined') {
+it("should work with Symbols", function() {
+  if (typeof Symbol !== "undefined") {
     ne([Symbol()], [Symbol()]);
     eq([Symbol.for("a")], [Symbol.for("a")]);
     ne(Symbol(), Symbol());
-    ne(Symbol('abc'), Symbol('abc'));
+    ne(Symbol("abc"), Symbol("abc"));
     eq(Symbol.for("a"), Symbol.for("a"));
     ne(Symbol.for("a"), Symbol.for("b"));
   }
 });
 
-it('should support node Buffer', function() {
-  if (typeof Buffer !== 'undefined') {
-    var b1 = new Buffer('abc', 'utf8');
-    var b2 = new Buffer('abc', 'utf8');
-    var b3 = new Buffer('acc', 'utf8');
+it("should support node Buffer", function() {
+  if (typeof Buffer !== "undefined") {
+    var b1 = new Buffer("abc", "utf8");
+    var b2 = new Buffer("abc", "utf8");
+    var b3 = new Buffer("acc", "utf8");
 
     eq(b1, b2);
     ne(b1, b3);
   }
 });
 
-it('should not assume object with only the same properties are equal', function() {
-  var F = function(a, b) { this.a = a; this.b = b; };
+it("should not assume object with only the same properties are equal", function() {
+  var F = function(a, b) {
+    this.a = a;
+    this.b = b;
+  };
 
   var f = new F(19, 11);
   var f1 = { a: 19, b: 11 };
