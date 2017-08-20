@@ -265,7 +265,7 @@ EQ.add(t.OBJECT, t.BUFFER, function(a) {
   //node Buffer have some strange hidden properties
 });
 
-[t.MAP, t.SET, t.WEAK_MAP, t.WEAK_SET].forEach(function(tp) {
+[t.MAP, t.SET].forEach(function(tp) {
   EQ.add(t.OBJECT, tp, function(a, b) {
     this._meet.push([a, b]);
 

@@ -469,6 +469,12 @@ it("es6 maps", function() {
   }
 });
 
+it("es WeakMap, WeakSet", function() {
+  const a = new WeakSet();
+  const b = new WeakSet();
+  eq(a, b);
+});
+
 it("should treat -0 and +0 as not equal when param not passed", function() {
   eq(-0, +0);
 
