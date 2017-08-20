@@ -127,8 +127,8 @@ it("fn2: functions w diff source aren't eq", function() {
   d = function(a, b, c) {
     return a * b * c;
   };
-  e = function(a, b, c) {
-    return a * b * c;
+  e = function(a, b, s) {
+    return a * b * s;
   };
   return ne(d, e);
 });
