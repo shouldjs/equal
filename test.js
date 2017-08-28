@@ -422,19 +422,19 @@ it("Check object prototypes", function() {
   ne(nb1, nb2);
 });
 
-it("typed arrays and array buffer", function() {
-  if (typeof Uint8Array !== "undefined") {
+if (typeof Uint8Array !== "undefined") {
+  it("typed arrays and array buffer", function() {
     var arr1 = new Uint8Array([21, 31]);
     var arr2 = new Uint8Array([21, 31]);
 
     eq(arr1, arr2);
 
     eq(arr1.buffer, arr2.buffer);
-  }
-});
+  });
+}
 
-it("es6 sets", function() {
-  if (typeof Set !== "undefined") {
+if (typeof Set !== "undefined") {
+  it("es6 sets", function() {
     var s1 = new Set([1, 2, 3]);
     var s2 = new Set([1, 2, 3]);
     var s3 = new Set(["a", "b", "c"]);
@@ -451,11 +451,12 @@ it("es6 sets", function() {
 
     ne(s1, s5);
     eq(s5, s6);
-  }
-});
+    eq(s6, s5);
+  });
+}
 
-it("es6 maps", function() {
-  if (typeof Map !== "undefined") {
+if (typeof Map !== "undefined") {
+  it("es6 maps", function() {
     var m1 = new Map([[1, 1], [2, 2], [3, 3]]);
     var m2 = new Map([[1, 1], [2, 2], [3, 3]]);
     var m3 = new Map([[1, 2], [2, 3], [3, 4]]);
@@ -481,14 +482,15 @@ it("es6 maps", function() {
 
     ne(m7, m8);
     ne(m9, m8);
-  }
-});
-
-it("es WeakMap, WeakSet", function() {
-  const a = new WeakSet();
-  const b = new WeakSet();
-  eq(a, b);
-});
+  });
+}
+if (typeof WeakSet !== "undefined") {
+  it("es WeakMap, WeakSet", function() {
+    var a = new WeakSet();
+    var b = new WeakSet();
+    eq(a, b);
+  });
+}
 
 it("should treat -0 and +0 as not equal when param not passed", function() {
   eq(-0, +0);
@@ -496,28 +498,27 @@ it("should treat -0 and +0 as not equal when param not passed", function() {
   ne(-0, +0, { plusZeroAndMinusZeroEqual: false });
 });
 
-it("should work with Symbols", function() {
-  if (typeof Symbol !== "undefined") {
+if (typeof Symbol !== "undefined") {
+  it("should work with Symbols", function() {
     ne([Symbol()], [Symbol()]);
     eq([Symbol.for("a")], [Symbol.for("a")]);
     ne(Symbol(), Symbol());
     ne(Symbol("abc"), Symbol("abc"));
     eq(Symbol.for("a"), Symbol.for("a"));
     ne(Symbol.for("a"), Symbol.for("b"));
-  }
-});
+  });
+}
 
-it("should support node Buffer", function() {
-  if (typeof Buffer !== "undefined") {
+if (typeof Buffer !== "undefined") {
+  it("should support node Buffer", function() {
     var b1 = new Buffer("abc", "utf8");
     var b2 = new Buffer("abc", "utf8");
     var b3 = new Buffer("acc", "utf8");
 
     eq(b1, b2);
     ne(b1, b3);
-  }
-});
-
+  });
+}
 it("should not assume object with only the same properties are equal", function() {
   var F = function(a, b) {
     this.a = a;
